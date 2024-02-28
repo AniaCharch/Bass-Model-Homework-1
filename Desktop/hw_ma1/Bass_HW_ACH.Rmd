@@ -1,0 +1,170 @@
+---
+title: "Bass Model and Look-alike Analysis"
+author: "Anna Charchyan"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(diffusion)
+library(readxl)
+library(ggpubr)
+```
+
+Innovation
+The aim of this short research is to perform a look-alike analysis with the bass diffusion model 
+to understand the possible behavior of new products in the market. For this research was selected AI-powered 
+smart device"iLet Bionic Pancreas" that links to a tube plugged into a patient’s body for getting the dosage of insulin right.
+
+Chosen product has a high potential for growth, since the healthcare industry is getting bigger 
+every year, and the number of people who has Diabetes is also rising. This device will be used by patients
+to monitor their condition  and glucose level constantly, as well as getting the dosage right. There are some products 
+in the market that provide similar opportunity for the customers such as smart insulin pens,
+however, as various research has shown, a credit-card-sized AI-powered smart device that links to a tube plugged into a 
+patient’s body devices give better estimate of insulin dosage and shots insulin itself, unlike other smart devices.
+
+Looks-alike Product
+For the looks-alike product, I chose smart insulin pens.Smart insulin pens are innovative devices designed
+to assist individuals with diabetes in managing their insulin injections more effectively. These pens typically incorporate
+advanced technology such as Bluetooth connectivity and companion mobile applications to offer features like dose tracking, 
+reminders, and data analysis.The choice of smart insulin pens is justified by two main factors. Firstly, smart insulin pens 
+cater to the needs of individuals requiring insulin therapy by offering features such as dose tracking, reminders, and dose adjustment 
+assistance. This constant support ensures users have access to vital information and assistance in managing their condition effectively.
+Secondly, there is a growing interest among young adults in utilizing digital health monitors to optimize their lifestyle choices,
+including diet and exercise as well as tracking health in a digital way instead of checking every 1-2 months in hospitals.
+
+```{r}
+library(readxl)
+data <- read_xlsx("/Users/macbook/Desktop/hw_1ma/SIP_Revenue_region.xlsx", sheet = 2)
+data<-data.frame(data)
+colnames(data) <- c("year", "worldwide_revenue")
+data$worldwide_revenue <- as.numeric(data$worldwide_revenue)
+non_numeric <- is.na(data$worldwide_revenue)
+if (any(non_numeric)) {
+  cat("Rows with non-numeric values in 'worldwide_revenue' column:\n")
+  print(data[non_numeric, ])
+}
+data$worldwide_revenue[non_numeric] <- NA
+data$cgm_unit_sold_estimate <- data$worldwide_revenue * 1000000
+data
+```
+
+Bass Model Parameters 
+
+```{r, echo = FALSE}
+data$worldwide_revenue <- as.numeric(data$worldwide_revenue)
+data <- na.omit(data)
+diffusion_estimate <- diffusion(data$cgm_unit_sold_estimate)
+p_estimate <- as.numeric(diffusion_estimate$w[1])
+q_estimate <- as.numeric(diffusion_estimate$w[2])
+m_estimate <- as.numeric(diffusion_estimate$w[3])
+diffusion_estimate
+str(data$cgm_unit_sold_estimate)
+```
+```{r, echo=FALSE}
+bass.f <- function(t,p,q){
+  ((p+q)^2/p)*exp(-(p+q)*t)/
+    (1+(q/p)*exp(-(p+q)*t))^2}
+bass.F <- function(t,p,q){
+  (1-exp(-(p+q)*t))/
+    (1+(q/p)*exp(-(p+q)*t)) }
+cum_ad<-ggplot(data.frame(t = c(1, 14)), aes(t)) +
+stat_function(fun = bass.F, args = c(p=p_estimate, q=q_estimate)) + 
+  labs(title = 'Cumalative adaptions for Smart Insulin Pens')
+cum_ad
+```
+```{r,echo = FALSE,  fig.height=5, fig.width=15}
+time_ad<-ggplot(data.frame(t = c(1, 14)), aes(t)) +
+stat_function(fun = bass.f, args = c(p=p_estimate, q=q_estimate)) + 
+  labs(title = 'The Smart Insulin Pen adoptions at time t')
+time_ad
+```
+```{r, echo = FALSE}
+ggarrange(cum_ad, time_ad)
+```
+
+With the Bass model coefficients p(coefficient of innovation) and q(coefficient of imitation) were estimated. In order to estimate potential sales of iLet Bionic Pancreas, first I will try to estimate the potential market size of the product. 
+
+
+```{r}
+library(png)
+img <- readPNG("/Users/macbook/Desktop/hw_1ma/diabetes_2_people.png")
+par(mar = rep(0, 4)) 
+plot(1, type = "n", xlab = "", ylab = "", xlim = c(0, 0), ylim = c(0, 0))
+rasterImage(img, 0, 0, 1, 1)
+library(grid)
+grid.raster(img)
+```
+As evident from the graph, there has been a significant surge in the number of individuals diagnosed with diabetes. This upward trend underscores the pressing need for innovative solutions to manage the condition effectively. In light of this, the demand for advanced insulin delivery products like Smart Insulin Pens and iLet Bionic Pancreas is poised to rise, offering promising avenues for better diabetes management and improved quality of life.
+
+
+```{r}
+library(png)
+img <- readPNG("/Users/macbook/Desktop/hw_1ma/tracking_device_usage.png")
+par(mar = rep(0, 4)) 
+plot(1, type = "n", xlab = "", ylab = "", xlim = c(0, 0), ylim = c(0, 0))
+rasterImage(img, 0, 0, 1, 1)
+library(grid)
+grid.raster(img)
+```
+
+According to statistics from Statista, approximately one-third of the population utilizes different tracking devices and apps to monitor their fitness activities. With this data, we estimate that around 20.7 million individuals track their state of health using look-alike technology.
+
+```{r, echo = FALSE}
+img <- readPNG("/Users/macbook/Desktop/hw_1ma/trackinhg_health.png")
+par(mar = rep(0, 4)) 
+plot(1, type = "n", xlab = "", ylab = "", xlim = c(0, 0), ylim = c(0, 0))
+rasterImage(img, 0, 0, 1, 1)
+library(grid)
+grid.raster(img)
+```
+Looking at another data from Statista, we can see that for people with Diabetes:
+For digital tracking:
+29% track blood sugar levels
+16% track food or diet
+22% track blood pressure
+
+According to the Centers for Disease Control and Prevention (CDC), approximately 10.5% of the U.S. population had diagnosed diabetes in 2018. From our previous statistics on the "Number of diagnosed prevalent cases of type 2 diabetes", estimated number for the U.S population is approximately 37,9 million people by 2025.
+
+Therefore, if we use that statistics, we will get that roughly there could be around 25.4 million adults with diabetes in the United States who would be potential users of digital tracking technology such as smart insulin pens. This number provides a rough approximation of the potential market size for such devices.
+
+
+```{r, echo = FALSE}
+data$number_of_adopters = bass.f(1:5, p = p_estimate, q = q_estimate)* 25421000
+data
+```
+
+```{r, echo = FALSE}
+innovation_diffusion_estimate<-diffusion(data$number_of_adopters)
+p_estimate_innovation <- as.numeric(innovation_diffusion_estimate$w[1])
+q_estimate_innovation <- as.numeric(innovation_diffusion_estimate$w[2])
+m_estimate_innovation <- as.numeric(innovation_diffusion_estimate$w[3])
+innovation_diffusion_estimate
+```
+
+```{r, echo = FALSE}
+time_ad<-ggplot(data.frame(t = c(1, 10)), aes(t)) +
+stat_function(fun = bass.f, args = c(p=p_estimate_innovation, q=q_estimate_innovation)) + 
+  labs(title = 'iLet Bionic Pancreas Number Of Adopters at time t') + ylab("Number of adopters") + xlab("t")
+time_ad
+```
+
+References 
+
+https://www.statista.com/statistics/1286511/smart-insulin-pens-market-worldwide-by-region/
+
+https://www.statista.com/search/?q=diabetes+and+tracking+health&Search=&p=1
+
+https://www.statista.com/statistics/1102267/share-us-adults-tracking-health-metrics-by-health-condition/
+
+https://www.statista.com/statistics/742448/global-fitness-tracking-and-technology-by-age/
+
+https://www.statista.com/statistics/1286510/smart-insulin-pens-market-worldwide-by-product/
+
+
+
+
+
+
