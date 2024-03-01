@@ -1,1 +1,1 @@
-# Marketing
+Bass Model Homework 1
